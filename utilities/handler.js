@@ -6,7 +6,7 @@ const
 // Handles messages events
 function handleMessage(senderId, receivedMessage) {
   let response
-  response = {'text': ''}
+  response = {}
 
   if (receivedMessage.text) {
     const
@@ -24,12 +24,23 @@ function handleMessage(senderId, receivedMessage) {
 
       case 'ENTER_YESNO':
         currSessionObj.birthday = receivedMessage.text
-        response['text'] = 'Do you want to know how many days until your next birthday?'
+        response['attachment'] = {
+          "type": "template",
+          "payload": {
+            "template_type": "button",
+            "text": "Do you want to know when is your next birthday?",
+            "buttons": [
+              { "type": "postback", "title": "Yes", "payload": "yes" },
+              { "type": "postback", "title": "No", "payload": "no" },
+            ]
+          }
+        }
         currSessionObj.context = 'FINAL'
         break
 
       case 'FINAL':
-        if (receivedMessage.text[0] === 'y') {
+        const lowerCaseMessage = receivedMessage.text.toLowerCase()
+        if (lowerCaseMessage[0] === 'y') {
           const daysLeft = birthdayCalculator(currSessionObj.birthday)
 
           if (daysLeft === 1) response['text'] = 'Tomorrow is your birthday!!'
@@ -40,10 +51,11 @@ function handleMessage(senderId, receivedMessage) {
         } else {
           response['text'] = 'Goodbye! 👋'
         }
-        sessions.splice(currSessionIdx, 1)
+        sessions.splice(currSessionIdx, 1) // Delete this session
         break
 
       default:
+        // Create new session
         response['text'] = `Hi! I'm AdaKerja Chatbot. What's your first name?`
         sessions.push({senderId, context: 'ENTER_BIRTHDATE'})
     }
@@ -59,8 +71,31 @@ function handleMessage(senderId, receivedMessage) {
 }
 
 // Handles messaging_postbacks events
-function handlePostback(sender_psid, received_postback) {
-  //This function assumes that user had
+function handlePostback(senderId, receivedPostback) {
+  // This function assumes that user has already initiated a session
+  const
+    sessions = store.get('sessions'),
+    currSessionIdx = sessions.findIndex(obj => obj.senderId === senderId),
+    payload = receivedPostback.payload
+
+  let response = { 'text': '' }
+
+  if (payload === 'yes') {
+    const daysLeft = birthdayCalculator(sessions[currSessionIdx].birthday)
+
+    if (daysLeft === 1) response['text'] = 'Tomorrow is your birthday!!'
+    else if (daysLeft === 0) response['text'] = 'Woohoo! Today is your birthday! Go celebrate with your friends!'
+    else response['text'] = `There are ${daysLeft} days left until your next birthday.`
+
+    response['text'] += '\n\nThank you for chatting with me!'
+  } else if (payload === 'no') {
+    response['text'] = 'Goodbye! 👋'
+  }
+
+  sessions.splice(currSessionIdx, 1) // Delete this session
+  store.set('sessions', sessions)
+
+  callSendAPI(senderId, response)
 }
 
 // Sends response messages via the Send API
