@@ -1,6 +1,6 @@
 const
   express = require('express'),
-  {handleMessage, handlePostback} = require('../utilities/handler')
+  {handleMessage, handlePostback} = require('../utilities/handler'),
   router = express.Router()
 
 function receiveMessage(req, res) {
@@ -41,6 +41,8 @@ function verifyWebhook(req, res) {
     } else {
       res.sendStatus(403)
     }
+  } else {
+    res.sendStatus(404)
   }
 }
 

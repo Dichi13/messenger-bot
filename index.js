@@ -9,7 +9,11 @@ dotenv.config()
 store.set('sessions', [])
 store.set('messages', [])
 app.use(bodyParser.json())
+
 app.use('/webhook', require('./api/webhook'))
+app.use('/messages', require('./api/messages'))
 
 // Sets server port and logs message on success
-app.listen(process.env.PORT || 1337, () => console.log('webhook is listening'))
+app.listen(process.env.PORT || 1337, () => console.log('Webhook is listening'))
+
+module.exports = app

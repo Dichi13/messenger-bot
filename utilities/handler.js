@@ -11,6 +11,7 @@ function handleMessage(senderId, receivedMessage) {
   if (receivedMessage.text) {
     const
       sessions = store.get('sessions'),
+      messages = store.get('messages'),
       currSessionIdx = sessions.findIndex(obj => obj.senderId === senderId),
       currSessionObj = currSessionIdx === -1 ? null : sessions[currSessionIdx],
       context = currSessionObj ? currSessionObj.context : ''
@@ -60,7 +61,9 @@ function handleMessage(senderId, receivedMessage) {
         sessions.push({senderId, context: 'ENTER_BIRTHDATE'})
     }
 
+    messages.push({senderId, messageId: receivedMessage.mid, message: receivedMessage.text})
     store.set('sessions', sessions)
+    store.set('messages', messages)
   } else {
     response = {
       'text': `I'm sorry! This bot only accepts text messages.`
